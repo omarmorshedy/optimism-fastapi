@@ -1,0 +1,14 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Edit resource type — Optimism admin{% endblock %}
+{% block content %}
+<h1>Edit resource type</h1>
+<form method="post" action="/admin/resource-types/{{ item.id }}/edit">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p>
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="{{ item.name }}" required>
+  </p>
+  <p><button type="submit" class="button button-primary">Save</button></p>
+  <p><a href="/admin/resource-types">Cancel</a></p>
+</form>
+{% endblock %}

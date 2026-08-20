@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Booking confirmed{% endblock %}
+{% block content %}
+<h1>Booking confirmed</h1>
+<p>Thanks {{ booking.name }}! Your booking has been confirmed.</p>
+<dl class="booking-details">
+  <dt>Resource</dt><dd>{{ resourceName }}</dd>
+  <dt>Start</dt><dd>{{ friendlyStartTime }}</dd>
+  <dt>End</dt><dd>{{ friendlyEndTime }}</dd>
+  {% if booking.notes %}<dt>Notes</dt><dd>{{ booking.notes }}</dd>{% endif %}
+  <dt>Reference</dt><dd>{{ booking.id }}</dd>
+</dl>
+<p>A confirmation email has been sent to {{ booking.email }}.</p>
+<p>
+  If you need to cancel this booking, please use the following link:<br>
+  <a href="{{ cancellation_url }}">{{ cancellation_url }}</a>
+</p>
+{% endblock %}

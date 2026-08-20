@@ -1,0 +1,64 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Availability windows — Optimism admin{% endblock %}
+{% block content %}
+<h1>Availability windows</h1>
+
+<h2>Create a window</h2>
+<form method="post" action="/admin/windows/create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p>
+    <label for="resourceId">Resource</label>
+    <select id="resourceId" name="resourceId" required>
+      {% for resource_id, resource_name in resources.items() %}
+        <option value="{{ resource_id }}">{{ resource_name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="weekday">Weekday (0=Sunday … 6=Saturday)</label>
+    <input type="number" id="weekday" name="weekday" min="0" max="6" value="1" required>
+  </p>
+  <p>
+    <label for="starts">Starts (HH:MM, UTC)</label>
+    <input type="time" id="starts" name="starts" value="09:30" required>
+  </p>
+  <p>
+    <label for="ends">Ends (HH:MM, UTC)</label>
+    <input type="time" id="ends" name="ends" value="17:30" required>
+  </p>
+  <p>
+    <label for="name">Name (optional)</label>
+    <input type="text" id="name" name="name">
+  </p>
+  <p><button type="submit" class="button button-primary">Create</button></p>
+</form>
+
+<h2>Existing windows</h2>
+<table class="data-table">
+  <thead>
+    <tr><th>ID</th><th>Resource</th><th>Weekday</th><th>Starts</th><th>Ends</th><th>Name</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ resources.get(item.resourceId, item.resourceId) }}</td>
+        <td>{{ item.weekday }}</td>
+        <td>{{ item.starts }}</td>
+        <td>{{ item.ends }}</td>
+        <td>{{ item.name or "—" }}</td>
+        <td>
+          <a href="/admin/windows/{{ item.id }}/edit">Edit</a>
+          <form method="post" action="/admin/windows/{{ item.id }}/delete" class="inline-form"
+                onsubmit="return confirm('Delete this window?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="button button-link button-danger-text">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7">No windows yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

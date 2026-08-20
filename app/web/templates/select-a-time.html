@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Choose a time — {{ resource.name }}{% endblock %}
+{% block content %}
+<h1>Choose a time</h1>
+<h2>{{ resource.name }}</h2>
+
+<div class="calendar-toolbar" aria-label="Week navigation">
+  <button type="button" id="prev-week" class="button">Previous week</button>
+  <span id="week-label">{{ initial_start }} to {{ initial_end }}</span>
+  <button type="button" id="next-week" class="button">Next week</button>
+</div>
+
+<form method="post" action="/your-details" class="calendar-form">
+  <input type="hidden" name="resource" value="{{ resource.id }}">
+  <div id="calendar-days">
+    {% for day in initial_calendar.dates %}
+      {% set day_resources = day.resources %}
+      {% set slots = day_resources[0].slots if day_resources else [] %}
+      <section class="calendar-day" aria-label="{{ day.date[:10] }}">
+        <h3>{{ day.date[:10] }}</h3>
+        {% if slots %}
+          <ul class="slot-list">
+            {% for slot in slots %}
+              <li>
+                {% if slot.status == "available" %}
+                  <button type="submit" name="slot" value="{{ slot.starts }}|{{ slot.ends }}" class="button slot-button">
+                    {{ slot.starts[11:16] }} – {{ slot.ends[11:16] }}
+                  </button>
+                {% else %}
+                  <span class="slot-unavailable" aria-disabled="true">{{ slot.starts[11:16] }} – {{ slot.ends[11:16] }} (unavailable)</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>No availability.</p>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.OPTIMISM_CALENDAR = {
+    resourceId: {{ resource.id }},
+    initialStart: "{{ initial_start }}",
+    initialEnd: "{{ initial_end }}"
+  };
+</script>
+<script src="/static/js/calendar.js" defer></script>
+{% endblock %}

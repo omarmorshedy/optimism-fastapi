@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Admin — Optimism{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/optimism.css">
+</head>
+<body class="admin">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="site-header">
+    <div class="container">
+      <p class="site-title"><a href="/admin/">Optimism admin</a></p>
+      <nav aria-label="Admin">
+        <ul class="nav-list">
+          <li><a href="/admin/">Dashboard</a></li>
+          <li><a href="/admin/resources">Resources</a></li>
+          <li><a href="/admin/resource-types">Resource types</a></li>
+          <li><a href="/admin/windows">Availability windows</a></li>
+          <li><a href="/admin/exceptions">Exceptions</a></li>
+          <li><a href="/admin/bookings">Bookings</a></li>
+          <li>
+            <form method="post" action="/admin/logout" class="inline-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="button button-link">Log out</button>
+            </form>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="container">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

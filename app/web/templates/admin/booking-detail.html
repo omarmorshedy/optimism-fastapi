@@ -1,0 +1,28 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Booking {{ booking.id }} — Optimism admin{% endblock %}
+{% block content %}
+<h1>Booking #{{ booking.id }}</h1>
+<dl class="booking-details">
+  <dt>Resource</dt><dd>{{ booking.resourceName }}</dd>
+  <dt>Name</dt><dd>{{ booking.name }}</dd>
+  <dt>Email</dt><dd>{{ booking.email }}</dd>
+  <dt>Start</dt><dd>{{ friendlyStartTime }}</dd>
+  <dt>End</dt><dd>{{ friendlyEndTime }}</dd>
+  <dt>Notes</dt><dd>{{ booking.notes or "—" }}</dd>
+  <dt>Status</dt><dd>{% if booking.cancelled %}Cancelled{% else %}Active{% endif %}</dd>
+  <dt>Created</dt><dd>{{ booking.createdAt }}</dd>
+</dl>
+{% if not booking.cancelled %}
+  <form method="post" action="/admin/bookings/{{ booking.id }}/cancel" class="inline-form"
+        onsubmit="return confirm('Cancel this booking?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="button">Cancel booking</button>
+  </form>
+{% endif %}
+<form method="post" action="/admin/bookings/{{ booking.id }}/delete" class="inline-form"
+      onsubmit="return confirm('Delete this booking?');">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button type="submit" class="button button-danger">Delete booking</button>
+</form>
+<p><a href="/admin/bookings">Back to bookings</a></p>
+{% endblock %}

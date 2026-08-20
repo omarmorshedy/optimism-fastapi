@@ -1,0 +1,54 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Windows for {{ resource.name }} — Optimism admin{% endblock %}
+{% block content %}
+<h1>Availability windows — {{ resource.name }}</h1>
+<p>Replacing the windows below applies immediately to availability and bookings.</p>
+<form method="post" action="/admin/resources/{{ resource.id }}/windows">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <table class="data-table" id="windows-table">
+    <thead>
+      <tr>
+        <th>Weekday (0=Sunday)</th><th>Starts (HH:MM)</th><th>Ends (HH:MM)</th><th>Name</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for window in windows %}
+        <tr class="window-row">
+          <td><input type="number" name="weekday" min="0" max="6" value="{{ window.weekday }}" required></td>
+          <td><input type="time" name="starts" value="{{ window.starts }}" required></td>
+          <td><input type="time" name="ends" value="{{ window.ends }}" required></td>
+          <td><input type="text" name="name" value="{{ window.name or '' }}"></td>
+          <td><button type="button" class="button button-link remove-row">Remove</button></td>
+        </tr>
+      {% else %}
+        <tr class="window-row">
+          <td><input type="number" name="weekday" min="0" max="6" value="1" required></td>
+          <td><input type="time" name="starts" value="09:30" required></td>
+          <td><input type="time" name="ends" value="17:30" required></td>
+          <td><input type="text" name="name" value=""></td>
+          <td><button type="button" class="button button-link remove-row">Remove</button></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p><button type="button" class="button" id="add-row">Add window</button></p>
+  <p><button type="submit" class="button button-primary">Save windows</button></p>
+  <p><a href="/admin/resources">Back to resources</a></p>
+</form>
+<script>
+  document.getElementById("add-row").addEventListener("click", function () {
+    const tbody = document.querySelector("#windows-table tbody");
+    const row = tbody.querySelector(".window-row").cloneNode(true);
+    row.querySelectorAll("input").forEach(function (input) { if (input.type !== "number") input.value = ""; });
+    tbody.appendChild(row);
+  });
+  document.querySelectorAll(".remove-row").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const tbody = document.querySelector("#windows-table tbody");
+      if (tbody.querySelectorAll(".window-row").length > 1) {
+        btn.closest("tr").remove();
+      }
+    });
+  });
+</script>
+{% endblock %}

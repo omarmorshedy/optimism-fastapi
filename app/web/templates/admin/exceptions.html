@@ -1,0 +1,66 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Availability exceptions — Optimism admin{% endblock %}
+{% block content %}
+<h1>Availability exceptions</h1>
+
+<h2>Create an exception</h2>
+<form method="post" action="/admin/exceptions/create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p>
+    <label for="resourceId">Resource</label>
+    <select id="resourceId" name="resourceId" required>
+      {% for resource_id, resource_name in resources.items() %}
+        <option value="{{ resource_id }}">{{ resource_name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="startDate">Start date</label>
+    <input type="date" id="startDate" name="startDate" required>
+  </p>
+  <p>
+    <label for="endDate">End date</label>
+    <input type="date" id="endDate" name="endDate" required>
+  </p>
+  <p>
+    <label for="kind">Kind</label>
+    <select id="kind" name="kind" required>
+      <option value="closed">Closed</option>
+      <option value="open">Open</option>
+    </select>
+  </p>
+  <p>
+    <label for="reason">Reason (optional)</label>
+    <input type="text" id="reason" name="reason">
+  </p>
+  <p><button type="submit" class="button button-primary">Create</button></p>
+</form>
+
+<h2>Existing exceptions</h2>
+<table class="data-table">
+  <thead>
+    <tr><th>ID</th><th>Resource</th><th>Start</th><th>End</th><th>Kind</th><th>Reason</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ resources.get(item.resourceId, item.resourceId) }}</td>
+        <td>{{ item.startDate }}</td>
+        <td>{{ item.endDate }}</td>
+        <td>{{ item.kind }}</td>
+        <td>{{ item.reason or "—" }}</td>
+        <td>
+          <form method="post" action="/admin/exceptions/{{ item.id }}/delete" class="inline-form"
+                onsubmit="return confirm('Delete this exception?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="button button-link button-danger-text">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7">No exceptions yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

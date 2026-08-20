@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Choose a resource{% endblock %}
+{% block content %}
+<h1>Choose a resource</h1>
+{% if resources %}
+  <ul class="resource-list">
+    {% for r in resources %}
+      <li class="resource-card">
+        <h2><a href="/select-a-time?resource={{ r.id }}">{{ r.name }}</a></h2>
+        {% if r.resourceTypeName %}<p>Type: {{ r.resourceTypeName }}</p>{% endif %}
+        <p>Capacity: {{ r.capacity }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No resources are currently available to book.</p>
+{% endif %}
+{% endblock %}

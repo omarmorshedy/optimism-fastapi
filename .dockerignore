@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+.tools
+tests
+docs
+legacy
+IMPLEMENTATION_LOG.md
+.env
+secrets
+*.md
+*.pyc
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache

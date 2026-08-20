@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# uv
+.tools/uv-cache/
+.tools/uv-python/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Node legacy submodule artifacts
+legacy/node_modules/
+legacy/package-lock.json
+legacy/api/package-lock.json
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Test output
+test-results/
+playwright-report/

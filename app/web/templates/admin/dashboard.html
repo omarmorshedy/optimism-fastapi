@@ -1,0 +1,13 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Dashboard — Optimism admin{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p>Manage resources, availability windows, exceptions and bookings.</p>
+<ul class="dashboard-links">
+  <li><a href="/admin/resources">Resources</a></li>
+  <li><a href="/admin/resource-types">Resource types</a></li>
+  <li><a href="/admin/windows">Availability windows</a></li>
+  <li><a href="/admin/exceptions">Availability exceptions</a></li>
+  <li><a href="/admin/bookings">Bookings</a></li>
+</ul>
+{% endblock %}

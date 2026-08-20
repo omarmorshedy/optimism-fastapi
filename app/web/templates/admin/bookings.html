@@ -1,0 +1,52 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Bookings — Optimism admin{% endblock %}
+{% block content %}
+<h1>Bookings</h1>
+
+<form method="get" action="/admin/bookings" class="filter-form">
+  <p>
+    <label for="resourceId">Resource</label>
+    <select id="resourceId" name="resourceId">
+      <option value="">All</option>
+      {% for resource_id, resource_name in resources.items() %}
+        <option value="{{ resource_id }}">{{ resource_name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="cancelled">Status</label>
+    <select id="cancelled" name="cancelled">
+      <option value="">All</option>
+      <option value="false">Active</option>
+      <option value="true">Cancelled</option>
+    </select>
+  </p>
+  <p>
+    <label for="email">Email contains</label>
+    <input type="text" id="email" name="email">
+  </p>
+  <p><button type="submit" class="button">Filter</button></p>
+</form>
+
+<table class="data-table">
+  <thead>
+    <tr><th>ID</th><th>Resource</th><th>Name</th><th>Email</th><th>Starts</th><th>Ends</th><th>Status</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.resourceName }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.email }}</td>
+        <td>{{ item.starts }}</td>
+        <td>{{ item.ends }}</td>
+        <td>{% if item.cancelled %}Cancelled{% else %}Active{% endif %}</td>
+        <td><a href="/admin/bookings/{{ item.id }}">View</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8">No bookings found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

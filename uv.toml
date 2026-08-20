@@ -1,0 +1,6 @@
+# uv configuration (repo-local).
+# Keeps uv's cache inside the workspace so the project is self-contained and
+# works in sandboxed/CI environments. UV_PYTHON_INSTALL_DIR is set via env in
+# Makefile/CI so managed Python installs also stay repo-local.
+cache-dir = ".tools/uv-cache"
+python-install-mirror = "https://github.com/astral-sh/python-build-standalone/releases/download"

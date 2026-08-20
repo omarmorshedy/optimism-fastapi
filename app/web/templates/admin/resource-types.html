@@ -1,0 +1,40 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Resource types — Optimism admin{% endblock %}
+{% block content %}
+<h1>Resource types</h1>
+
+<h2>Create a resource type</h2>
+<form method="post" action="/admin/resource-types/create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p>
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
+  </p>
+  <p><button type="submit" class="button button-primary">Create</button></p>
+</form>
+
+<h2>Existing resource types</h2>
+<table class="data-table">
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.name }}</td>
+        <td>
+          <a href="/admin/resource-types/{{ item.id }}/edit">Edit</a>
+          <form method="post" action="/admin/resource-types/{{ item.id }}/delete" class="inline-form"
+                onsubmit="return confirm('Delete resource type {{ item.name }}?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="button button-link button-danger-text">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3">No resource types yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

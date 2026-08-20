@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin login — Optimism</title>
+  <link rel="stylesheet" href="/static/css/optimism.css">
+</head>
+<body class="admin">
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <main id="main" class="container">
+    <h1>Admin login</h1>
+    {% if error %}<p class="notice notice-error" role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="/admin/login">
+      <input type="hidden" name="redirect" value="{{ redirect or '/admin/' }}">
+      <p>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </p>
+      <p><button type="submit" class="button button-primary">Log in</button></p>
+    </form>
+  </main>
+</body>
+</html>

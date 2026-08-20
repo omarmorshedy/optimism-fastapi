@@ -1,0 +1,56 @@
+# Optimism FastAPI — local development / staging stack (arc42 §7.3).
+# Secrets are provided via Docker secrets; never bake values into this file.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: optimism
+      POSTGRES_USER: optimism
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U optimism"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://optimism:optimism@db:5432/optimism
+      ADMIN_PASSWORD_HASH_FILE: /run/secrets/admin_hash
+      SESSION_SECRET_FILE: /run/secrets/session_secret
+      OPTIMISM_WEBSITE_BASE_URL: http://localhost:8000
+      OPTIMISM_EMAIL_ORG_FROM_ADDR: ${OPTIMISM_EMAIL_ORG_FROM_ADDR:-booking@example.org}
+      OPTIMISM_EMAIL_ORG_NOTIFY_ADDR: ${OPTIMISM_EMAIL_ORG_NOTIFY_ADDR:-organisers@example.org}
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_TLS: ${SMTP_TLS:-false}
+      EMAIL_WORKER_ENABLED: ${EMAIL_WORKER_ENABLED:-true}
+      AUTO_MIGRATE: "true"
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - admin_hash
+      - session_secret
+
+volumes:
+  pgdata:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  admin_hash:
+    file: ./secrets/admin_hash.txt
+  session_secret:
+    file: ./secrets/session_secret.txt

@@ -1,0 +1,56 @@
+{% extends "admin/admin-base.html" %}
+{% block title %}Resources — Optimism admin{% endblock %}
+{% block content %}
+<h1>Resources</h1>
+
+<h2>Create a resource</h2>
+<form method="post" action="/admin/resources/create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p>
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
+  </p>
+  <p>
+    <label for="resourceTypeId">Resource type</label>
+    <select id="resourceTypeId" name="resourceTypeId">
+      <option value="">— none —</option>
+      {% for type_id, type_name in types.items() %}
+        <option value="{{ type_id }}">{{ type_name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="capacity">Capacity</label>
+    <input type="number" id="capacity" name="capacity" min="1" value="1" required>
+  </p>
+  <p><button type="submit" class="button button-primary">Create</button></p>
+</form>
+
+<h2>Existing resources</h2>
+<table class="data-table">
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Type</th><th>Capacity</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.resourceTypeName or "—" }}</td>
+        <td>{{ item.capacity }}</td>
+        <td>
+          <a href="/admin/resources/{{ item.id }}/edit">Edit</a>
+          <a href="/admin/resources/{{ item.id }}/windows">Windows</a>
+          <form method="post" action="/admin/resources/{{ item.id }}/delete" class="inline-form"
+                onsubmit="return confirm('Delete resource {{ item.name }}?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="button button-link button-danger-text">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">No resources yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
