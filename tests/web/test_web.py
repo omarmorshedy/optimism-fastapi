@@ -34,6 +34,14 @@ class TestPublicFlow:
         assert response.status_code == 200
         assert "Booking resources at DoES Liverpool" in response.text
 
+    def test_html_pages_are_never_cached(self, client) -> None:
+        """Dynamic pages must not be cached: a stale page would show old
+        links/times (e.g. past slots appearing bookable)."""
+        for path in ("/", "/select-a-resource", "/admin/login"):
+            response = client.get(path)
+            assert response.status_code == 200
+            assert response.headers.get("cache-control") == "no-store", path
+
     def test_select_a_resource(self, seeded, client) -> None:
         response = client.get("/select-a-resource")
         assert response.status_code == 200

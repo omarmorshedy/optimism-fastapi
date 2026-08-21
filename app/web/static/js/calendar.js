@@ -36,8 +36,15 @@
 
   // Slots whose end time has passed are not bookable (same fixed-format UTC
   // strings on both sides, so string comparison equals chronological order).
+  // Uses the LATER of the server-provided time and the browser clock, so a
+  // stale page/config can never make a past slot bookable.
   function isPast(slot) {
-    return config.now && slot.ends <= config.now;
+    var ref = config.now;
+    var browserNow = new Date().toISOString();
+    if (!ref || ref < browserNow) {
+      ref = browserNow;
+    }
+    return slot.ends <= ref;
   }
 
   function renderDays(calendar) {

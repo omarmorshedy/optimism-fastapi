@@ -423,3 +423,32 @@ Two user-reported bugs, both reproduced live first:
 Tests: token-lookup-immediately-after-creation (API + web link),
 invalid-email-422 (API + web). Full suite **232 passed** (+5 PG integration),
 ruff + mypy clean.
+
+## 2026-08-21 — Step 14: Cancellation robustness + past-days caching root cause
+
+User still saw the cancel link "not working" and past days becoming available
+after week navigation. Investigation:
+
+- **Cancel flow re-verified live** (GET confirmation page → POST → DB cancelled
+  = t; commit-before-response race test 5× create + immediate lookup = all
+  200). One genuine 404 was observed in the access logs 56 ms after creation
+  during a rebuild window, so the fixes below make stale state impossible.
+- **Root cause for the past-days regression**: the calendar JS changed (added
+  the past-slot check) but `/static/js/calendar.js` is an UNVERSIONED static
+  file — a browser with the old cached file kept rendering past slots as
+  bookable after JS navigation. HTML pages were also cacheable. Fixes:
+  - `Cache-Control: no-store` on every HTML response (AccessLogMiddleware) —
+    a stale page can no longer be served.
+  - Versioned asset URLs (`calendar.js?v=2`, css/legacy assets `?v=1`) so
+    updated files always propagate to browsers.
+  - Hardened `isPast()` in the JS: uses the LATER of the server-provided time
+    and the browser clock (fallback when `now` config is missing), so a past
+    slot can never be rendered bookable. Node simulation of next→back week
+    navigation with NO `now` config: all past days render 0 bookable buttons.
+- **Cancellation UX**: the legacy confirmation page's only cancel affordance
+  was the modal — added a visible direct "Open the cancellation page" link as
+  a fallback. Also made the cancellation-cutoff error message explicit
+  ("…has started or is about to start (cancellation cutoff reached)") so a
+  409 is self-explanatory instead of looking like a broken link.
+- Tests: HTML no-store header; calendar.js versioned in both themes; legacy
+  fallback link. Suite **234 passed**, ruff + mypy clean; verified live.

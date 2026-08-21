@@ -50,7 +50,7 @@ from app.models.booking import Booking
 
 DETAIL_WINDOW_MISMATCH = "Booking times must exactly match an availability window."
 DETAIL_UNAVAILABLE_DATE = "This time slot is not available on the requested date."
-DETAIL_CUTOFF_PASSED = "This booking can no longer be changed or cancelled."
+DETAIL_CUTOFF_PASSED = "This booking can no longer be changed or cancelled because it has started or is about to start (cancellation cutoff reached)."
 DETAIL_CANCELLED_AMEND = "This booking has been cancelled and cannot be amended."
 DETAIL_AMEND_MESSAGE = "Booking amended successfully."
 DETAIL_SOFT_DELETED = "Booking deleted."

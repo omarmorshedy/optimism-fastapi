@@ -244,12 +244,20 @@ class AccessLogMiddleware:
             nonlocal status_code
             if message["type"] == "http.response.start":
                 status_code = message.get("status", 500)
+                headers = list(message.get("headers", []))
                 # Propagate pagination total counts (admin lists, API_SPEC §1.6).
                 total = getattr(request.state, "total_count", None)
                 if total is not None:
-                    headers = list(message.get("headers", []))
                     headers.append((b"X-Total-Count", str(total).encode("ascii")))
-                    message["headers"] = headers
+                # Dynamic HTML pages must never be cached: a stale page would
+                # show old links/times (e.g. past slots appearing bookable).
+                content_type = b""
+                for key, value in headers:
+                    if key.lower() == b"content-type":
+                        content_type = value
+                if b"text/html" in content_type:
+                    headers.append((b"Cache-Control", b"no-store"))
+                message["headers"] = headers
             await send(message)
 
         try:

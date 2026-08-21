@@ -40,7 +40,7 @@ DETAIL_END_AFTER_START = "End time must be after start time."
 DETAIL_SLOT_FULL = "This time slot is already fully booked. Please select another time."
 DETAIL_NO_BOOKING_WITH_TOKEN = "No booking found with this token."
 DETAIL_ALREADY_CANCELLED = "This booking has already been cancelled."
-DETAIL_CUTOFF_PASSED = "This booking can no longer be changed or cancelled."
+DETAIL_CUTOFF_PASSED = "This booking can no longer be changed or cancelled because it has started or is about to start (cancellation cutoff reached)."
 DETAIL_BOOKING_CANCELLED = "This booking has been cancelled and cannot be amended."
 
 
@@ -160,9 +160,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def pydantic_validation_handler(request: Request, exc: ValidationError) -> JSONResponse:
         errors = exc.errors(include_url=False)
         message = str(errors[0]["msg"]) if errors else "Invalid input."
-        return _problem_response(
-            request, validation_error(message, instance=str(request.url.path))
-        )
+        return _problem_response(request, validation_error(message, instance=str(request.url.path)))
 
     @app.exception_handler(TimeError)
     async def time_error_handler(request: Request, exc: TimeError) -> JSONResponse:

@@ -65,6 +65,12 @@ class TestLegacyTheme:
         assert "Dinky" in response.text
         assert 'class="btn btn-primary"' in response.text
 
+    def test_calendar_js_is_versioned(self, legacy_client, client) -> None:
+        """The calendar JS is cache-busted so users never run a stale renderer
+        (which could show past slots as bookable)."""
+        assert "/static/js/calendar.js?v=2" in legacy_client.get("/select-a-time?resource=1").text
+        assert "/static/js/calendar.js?v=2" in client.get("/select-a-time?resource=1").text
+
     def test_select_a_time(self, legacy_client, frozen_week) -> None:
         response = legacy_client.get("/select-a-time?resource=1")
         assert response.status_code == 200
@@ -113,6 +119,8 @@ class TestLegacyTheme:
         assert "Booking Confirmed!" in confirmation.text
         assert "cancelBookingModal" in confirmation.text
         assert "/cancel-booking/" in confirmation.text
+        # Visible fallback link in case the modal cannot open.
+        assert "Open the cancellation page" in confirmation.text
 
 
 class TestThemeSelection:
