@@ -304,3 +304,24 @@ no-overbooking concurrency test).
 - `.env.example` now ships the DEV-ONLY bcrypt hash of `change-me` (matching
   the code default), so copying it verbatim yields a working admin login
   (password `change-me`); `make hash` documented for real passwords.
+
+## 2026-08-21 — Step 10: Fix dev seed weekday coverage + JS/polish clarifications
+
+- **Bug found via user review:** the dev seed created every availability window
+  only on Monday, so resources like Dinky appeared bookable one day a week.
+  The application logic is correct (windows are per resource+weekday and are
+  expanded per date by the calendar/booking services); the seed data was
+  wrong. Fixed `scripts/seed_dev.py` to repeat each window time on every
+  working weekday (Mon–Fri, weekday 1–5). Also documented the legacy bitmask
+  mapping: `day: 31` (bits 0..4) literally covers Sun–Thu in the legacy
+  Sunday=0 convention — treated as a legacy off-by-one and mapped to Mon–Fri
+  to match the slot names ("Weekday …") and the expectation of availability
+  on all working days.
+- Re-seeded the running compose stack: Dinky now shows 16 half-hour slots on
+  each of Mon–Fri (0 on weekends); verified a Tuesday booking now succeeds.
+- Clarified for the user: the only JavaScript in the project is the small
+  browser-side `app/web/static/js/calendar.js` (week navigation); all server
+  side is Python/FastAPI per ADR-002/004 (the rewrite replaces the legacy
+  Node/Express JS). The pages look different because the legacy Bootstrap
+  4.5/FullCalendar styling was replaced by a custom accessible stylesheet and
+  a progressively-enhanced calendar (an explicitly allowed option).
