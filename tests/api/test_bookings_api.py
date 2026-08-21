@@ -64,6 +64,26 @@ class TestCreateBooking:
         admin_list = seeded.get("/api/v1/bookings")
         assert "token" not in admin_list.json()[0]
 
+    def test_token_lookup_works_immediately_after_creation(self, seeded) -> None:
+        """The creation transaction is committed before the response is sent,
+        so the returned cancellation token is usable right away (regression:
+        a yield-dependency teardown commit used to race the insert)."""
+        response = seeded.post("/api/v1/bookings", json=BOOKING_PAYLOAD)
+        assert response.status_code == 201
+        token = response.json()["token"]
+        # No sleep: the very next request must see the booking.
+        lookup = seeded.get(f"/api/v1/bookings/lookup/{token}")
+        assert lookup.status_code == 200
+        assert lookup.json()["cancelled"] is False
+
+    def test_invalid_email_is_422_not_500(self, seeded) -> None:
+        """A syntactically weak email (john@gmail passes HTML5 UI checks but
+        fails email-validator) returns a 422 problem, never a 500."""
+        payload = {**BOOKING_PAYLOAD, "email": "john@gmail"}
+        response = seeded.post("/api/v1/bookings", json=payload)
+        assert response.status_code == 422
+        assert response.headers["content-type"].startswith("application/problem+json")
+
     def test_email_outbox_row_created(self, seeded, db_session) -> None:
         seeded.post("/api/v1/bookings", json=BOOKING_PAYLOAD)
         db_session.expire_all()

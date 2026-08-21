@@ -7,11 +7,12 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Path
 
 from app.api.deps import limit_calendar_read
+from app.core.route import CommitOnSuccessRoute
 from app.core.time import parse_date
 from app.db.session import SessionDep
 from app.domains.calendar.service import CalendarService
 
-calendar_router = APIRouter(prefix="/calendar", tags=["calendar"])
+calendar_router = APIRouter(prefix="/calendar", tags=["calendar"], route_class=CommitOnSuccessRoute)
 
 ResourceId = Annotated[int, Path(ge=0)]
 

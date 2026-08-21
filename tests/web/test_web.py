@@ -169,6 +169,48 @@ class TestPublicFlow:
         lookup = client.get(f"/api/v1/bookings/lookup/{token}")
         assert lookup.json()["cancelled"] is True
 
+    def test_cancel_link_usable_immediately_after_booking(self, seeded, client) -> None:
+        """The confirmation page's cancellation link must work the moment it
+        is shown (regression: commit raced the response)."""
+        import re
+
+        client.get("/select-a-time?resource=1")
+        confirmation = client.post(
+            "/confirmation",
+            data={
+                "resourceId": "1",
+                "name": "Quick Cancel",
+                "email": "quick@example.org",
+                "starts": f"{MONDAY.isoformat()}T09:30:00",
+                "ends": f"{MONDAY.isoformat()}T10:30:00",
+                "notes": "",
+            },
+        )
+        match = re.search(r"/cancel-booking/([A-Za-z0-9_-]+)", confirmation.text)
+        assert match, "cancellation link missing"
+        token = match.group(1)
+        # Immediately follow the link: it must not 404.
+        page = client.get(f"/cancel-booking/{token}")
+        assert page.status_code == 200
+        assert "Are you sure" in page.text
+
+    def test_invalid_email_shows_friendly_error_not_500(self, seeded, client) -> None:
+        client.get("/select-a-time?resource=1")
+        response = client.post(
+            "/confirmation",
+            data={
+                "resourceId": "1",
+                "name": "Bad Email",
+                "email": "john@gmail",
+                "starts": f"{MONDAY.isoformat()}T09:30:00",
+                "ends": f"{MONDAY.isoformat()}T10:30:00",
+                "notes": "",
+            },
+        )
+        assert response.status_code == 422
+        assert "Something went wrong" in response.text
+        assert "email" in response.text.lower()
+
     def test_unknown_cancel_token_page(self, client) -> None:
         response = client.get("/cancel-booking/unknown-token")
         assert response.status_code == 404

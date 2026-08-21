@@ -10,6 +10,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, Response, status
 
+from app.core.route import CommitOnSuccessRoute
 from app.db.session import SessionDep
 from app.domains.admin.audit import record_audit
 from app.domains.admin.auth import require_admin, require_csrf
@@ -26,8 +27,14 @@ from app.domains.windows.service import (
     AvailabilityWindowService,
 )
 
-windows_router = APIRouter(prefix="/availability-windows", tags=["availability-windows"])
-exceptions_router = APIRouter(prefix="/availability-exceptions", tags=["availability-exceptions"])
+windows_router = APIRouter(
+    prefix="/availability-windows", tags=["availability-windows"], route_class=CommitOnSuccessRoute
+)
+exceptions_router = APIRouter(
+    prefix="/availability-exceptions",
+    tags=["availability-exceptions"],
+    route_class=CommitOnSuccessRoute,
+)
 
 WindowId = Annotated[int, Path(ge=0)]
 ExceptionId = Annotated[int, Path(ge=0)]

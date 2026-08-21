@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, Response
+from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.time import TimeError
@@ -154,6 +155,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         msg = first.get("msg", "Invalid request.")
         detail = f"Invalid input for '{loc}': {msg}" if loc else str(msg)
         return _problem_response(request, validation_error(detail, instance=str(request.url.path)))
+
+    @app.exception_handler(ValidationError)
+    async def pydantic_validation_handler(request: Request, exc: ValidationError) -> JSONResponse:
+        errors = exc.errors(include_url=False)
+        message = str(errors[0]["msg"]) if errors else "Invalid input."
+        return _problem_response(
+            request, validation_error(message, instance=str(request.url.path))
+        )
 
     @app.exception_handler(TimeError)
     async def time_error_handler(request: Request, exc: TimeError) -> JSONResponse:

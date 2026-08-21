@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.deps import limit_admin_login
 from app.core.config import Settings
+from app.core.route import CommitOnSuccessRoute
 from app.db.session import SessionDep
 from app.domains.admin.auth import (
     CSRF_COOKIE,
@@ -17,7 +18,7 @@ from app.domains.admin.auth import (
 )
 from app.domains.admin.schemas import LoginRequest, LoginResponse
 
-admin_router = APIRouter(prefix="/admin", tags=["admin"])
+admin_router = APIRouter(prefix="/admin", tags=["admin"], route_class=CommitOnSuccessRoute)
 
 
 def _set_auth_cookies(

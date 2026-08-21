@@ -6,6 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Response, status
 
+from app.core.route import CommitOnSuccessRoute
 from app.db.session import SessionDep
 from app.domains.admin.audit import record_audit
 from app.domains.admin.auth import require_admin, require_csrf
@@ -21,8 +22,12 @@ from app.domains.resources.service import ResourceService, ResourceTypeService
 from app.domains.windows.schemas import AvailabilityWindowRead, WindowReplacementItem
 from app.domains.windows.service import AvailabilityWindowService
 
-resources_router = APIRouter(prefix="/resources", tags=["resources"])
-resource_types_router = APIRouter(prefix="/resource-types", tags=["resource-types"])
+resources_router = APIRouter(
+    prefix="/resources", tags=["resources"], route_class=CommitOnSuccessRoute
+)
+resource_types_router = APIRouter(
+    prefix="/resource-types", tags=["resource-types"], route_class=CommitOnSuccessRoute
+)
 
 ResourceId = Annotated[int, Path(ge=0)]
 TypeId = Annotated[int, Path(ge=0)]

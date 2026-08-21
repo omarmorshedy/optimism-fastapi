@@ -390,3 +390,36 @@ for calendar-week alignment, past-slot disabling, and the legacy theme using
 the unified markup. Full suite **223 passed + 5 integration (PG)**; ruff +
 mypy clean. Verified live in compose: both themes show "2026-08-16 to
 2026-08-22" with identical slot markup; stack left on the legacy theme.
+
+## 2026-08-21 — Step 13: Fix cancellation-link race + invalid-email 500
+
+Two user-reported bugs, both reproduced live first:
+
+1. **Cancellation link could 404 right after booking.** Root cause: FastAPI
+   finalises `yield` dependencies AFTER the response is delivered, so
+   `get_db`'s teardown commit ran after the client could observe the
+   response. A booking's confirmation/cancellation link was returned before
+   the insert was committed — an immediate follow-up (or an automated
+   client) would get 404. Proven by repro: the page token's SHA-256 matched
+   the DB row, yet the immediate lookup 404'd; seconds later it worked.
+   **Fix:** new `app/core/route.py` `CommitOnSuccessRoute` — every router
+   (API + web) now uses it; the route handler commits (or rolls back) the
+   request session between the endpoint and the response, so writes are
+   visible the moment the response arrives. `get_db` still exposes the
+   session on `request.state.db_session` and keeps a teardown commit as a
+   safety net. Verified live: 6× create + immediate token lookup → all 200;
+   full web book→link→cancel flow works.
+
+2. **`john@gmail` (passes the HTML5 UI check) caused a 500.** The web
+   `/confirmation` route caught `Problem` only; Pydantic `EmailStr`
+   rejection raised `ValidationError`, which escaped to the global handler →
+   500. **Fix:** web routes now catch `(Problem, ValidationError)` and render
+   a friendly 422 error page via `_form_failure`; a global
+   `ValidationError` handler maps any remaining cases to 422
+   `application/problem+json` (defensive). Verified live: API → 422 problem
+   with a clear email message; web → 422 page "Something went wrong … value
+   is not a valid email address".
+
+Tests: token-lookup-immediately-after-creation (API + web link),
+invalid-email-422 (API + web). Full suite **232 passed** (+5 PG integration),
+ruff + mypy clean.

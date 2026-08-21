@@ -17,9 +17,11 @@ from pathlib import Path
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import ValidationError
 
 from app.core.config import Settings
 from app.core.exceptions import Problem
+from app.core.route import CommitOnSuccessRoute
 from app.core.time import format_llll, parse_datetime
 from app.db.session import SessionDep
 from app.domains.admin.audit import record_audit
@@ -56,7 +58,7 @@ from app.web.deps import (
     verify_form_csrf,
 )
 
-web_router = APIRouter(include_in_schema=False)
+web_router = APIRouter(include_in_schema=False, route_class=CommitOnSuccessRoute)
 
 TEMPLATE_DIRS = {
     "modern": Path(__file__).parent / "templates",
@@ -87,6 +89,18 @@ def _error(request: Request, message: str, status: int = 400) -> HTMLResponse:
     response = render(request, "error.html", safeErrorMessage=message)
     response.status_code = status
     return response
+
+
+def _form_failure(request: Request, exc: Exception) -> HTMLResponse:
+    """Render a friendly HTML error page for a form submission that raised a
+    domain Problem or a Pydantic ValidationError (e.g. an invalid email)."""
+    if isinstance(exc, Problem):
+        return _error(request, exc.detail, status=exc.status)
+    if isinstance(exc, ValidationError):
+        errors = exc.errors(include_url=False)
+        message = str(errors[0]["msg"]) if errors else "Invalid input."
+        return _error(request, message, status=422)
+    raise exc
 
 
 def _require_admin_page(request: Request, session: SessionDep) -> str:
@@ -134,8 +148,8 @@ def select_a_resource(request: Request, session: SessionDep) -> HTMLResponse:
     try:
         resources = [r.model_dump(by_alias=True) for r in ResourceService(session).list()]
         types = ResourceTypeService(session).list()
-    except Problem as exc:
-        return _error(request, exc.detail)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     type_names = {t.id: t.name for t in types}
     for r in resources:
         r["resourceTypeName"] = type_names.get(r["resourceTypeId"])
@@ -154,8 +168,8 @@ def select_a_time(
         return _error(request, "No resource was selected.")
     try:
         resource_obj = ResourceService(session).get(resource).model_dump(by_alias=True)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     # The initial week is the current CALENDAR week (Sunday..Saturday, matching
     # the legacy FullCalendar convention and the Sunday=0 weekday rule), not
     # "today .. today+6". It is rendered server-side so the page works without
@@ -201,11 +215,12 @@ def calendar_data_web(
 ) -> dict[str, object]:
     """Same-process calendar JSON for the select-a-time page's JS (public)."""
     try:
-        from app.core.time import parse_date
+        from app.core.time import TimeError, parse_date
 
         return CalendarService(session).get(parse_date(start), parse_date(end), resource)
-    except Problem as exc:
-        return {"dates": [], "error": exc.detail}
+    except (Problem, TimeError) as exc:
+        detail = exc.detail if isinstance(exc, Problem) else str(exc)
+        return {"dates": [], "error": detail}
 
 
 # --- public: details ---------------------------------------------------------
@@ -230,8 +245,8 @@ def your_details(
     intent.ends = finish
     try:
         resource_obj = ResourceService(session).get(resource).model_dump(by_alias=True)
-    except Problem as exc:
-        return _error(request, exc.detail, status=404)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     response = render(
         request,
         "your-details.html",
@@ -280,8 +295,8 @@ def confirmation(
                 notes=notes,
             )
         )
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     booking = created.model_dump(by_alias=True)
     cancellation_url = f"{settings.optimism_website_base_url}/cancel-booking/{booking['token']}"
     return render(
@@ -304,8 +319,8 @@ def cancel_booking_page(request: Request, session: SessionDep, token: str) -> HT
     service = BookingService(session, settings)
     try:
         booking = service.lookup_by_token(token).model_dump(by_alias=True)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return render(
         request,
         "cancel-booking.html",
@@ -324,8 +339,8 @@ def cancel_booking_action(request: Request, session: SessionDep, token: str) -> 
     service = BookingService(session, settings)
     try:
         result = service.cancel_by_token(token)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     booking = result.booking.model_dump(by_alias=True)
     return render(
         request,
@@ -436,8 +451,8 @@ def admin_resource_type_create(
     try:
         obj = ResourceTypeService(session).create(ResourceTypeCreate(name=name))
         record_audit(session, "resource_type.create", resource_id=obj.id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/resource-types", status_code=303)
 
 
@@ -463,8 +478,8 @@ def admin_resource_type_edit(
     try:
         obj = ResourceTypeService(session).update(type_id, ResourceTypeUpdate(name=name))
         record_audit(session, "resource_type.update", resource_id=obj.id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/resource-types", status_code=303)
 
 
@@ -480,8 +495,8 @@ def admin_resource_type_delete(
     try:
         ResourceTypeService(session).delete(type_id)
         record_audit(session, "resource_type.delete", resource_id=type_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/resource-types", status_code=303)
 
 
@@ -520,8 +535,8 @@ def admin_resource_create(
             )
         )
         record_audit(session, "resource.create", resource_id=obj.id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/resources", status_code=303)
 
 
@@ -559,8 +574,8 @@ def admin_resource_edit(
             ),
         )
         record_audit(session, "resource.update", resource_id=obj.id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/resources", status_code=303)
 
 
@@ -576,8 +591,8 @@ def admin_resource_delete(
     try:
         ResourceService(session).delete(resource_id)
         record_audit(session, "resource.delete", resource_id=resource_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/resources", status_code=303)
 
 
@@ -632,8 +647,8 @@ async def admin_resource_windows_replace(
     try:
         AvailabilityWindowService(session).replace_for_resource(resource_id, items)
         record_audit(session, "resource.windows.replace", resource_id=resource_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse(f"/admin/resources/{resource_id}/windows", status_code=303)
 
 
@@ -671,8 +686,8 @@ def admin_window_create(
             )
         )
         record_audit(session, "availability_window.create", resource_id=obj.resource_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/windows", status_code=303)
 
 
@@ -712,8 +727,8 @@ def admin_window_edit(
             ),
         )
         record_audit(session, "availability_window.update", resource_id=obj.resource_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/windows", status_code=303)
 
 
@@ -729,8 +744,8 @@ def admin_window_delete(
     try:
         AvailabilityWindowService(session).delete(window_id)
         record_audit(session, "availability_window.delete", resource_id=window_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/windows", status_code=303)
 
 
@@ -777,8 +792,8 @@ def admin_exception_create(
             )
         )
         record_audit(session, "availability_exception.create", resource_id=obj.resource_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/exceptions", status_code=303)
 
 
@@ -794,8 +809,8 @@ def admin_exception_delete(
     try:
         AvailabilityExceptionService(session).delete(exception_id)
         record_audit(session, "availability_exception.delete", resource_id=exception_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/exceptions", status_code=303)
 
 
@@ -863,8 +878,8 @@ def admin_booking_cancel(
     try:
         BookingService(session, settings).cancel_admin(booking_id)
         record_audit(session, "booking.cancel", booking_id=booking_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse(f"/admin/bookings/{booking_id}", status_code=303)
 
 
@@ -881,6 +896,6 @@ def admin_booking_delete(
     try:
         BookingService(session, settings).soft_delete(booking_id)
         record_audit(session, "booking.delete", booking_id=booking_id)
-    except Problem as exc:
-        return _error(request, exc.detail, status=exc.status)
+    except (Problem, ValidationError) as exc:
+        return _form_failure(request, exc)
     return RedirectResponse("/admin/bookings", status_code=303)

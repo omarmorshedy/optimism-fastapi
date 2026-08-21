@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request, Response, status
 from app.api.deps import limit_booking_cancel, limit_booking_create
 from app.core.config import Settings
 from app.core.metrics import BOOKING_CANCELLED, BOOKING_CREATED
+from app.core.route import CommitOnSuccessRoute
 from app.db.session import SessionDep
 from app.domains.admin.audit import record_audit
 from app.domains.admin.auth import require_admin, require_csrf
@@ -27,7 +28,7 @@ from app.domains.bookings.schemas import (
 )
 from app.domains.bookings.service import BookingService
 
-bookings_router = APIRouter(prefix="/bookings", tags=["bookings"])
+bookings_router = APIRouter(prefix="/bookings", tags=["bookings"], route_class=CommitOnSuccessRoute)
 
 BookingId = Annotated[int, Path(ge=0)]
 
