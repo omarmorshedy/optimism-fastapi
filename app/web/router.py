@@ -58,13 +58,20 @@ from app.web.deps import (
 
 web_router = APIRouter(include_in_schema=False)
 
-TEMPLATES_DIR = Path(__file__).parent / "templates"
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+TEMPLATE_DIRS = {
+    "modern": Path(__file__).parent / "templates",
+    "legacy": Path(__file__).parent / "templates_legacy",
+}
+_templates = {
+    name: Jinja2Templates(directory=str(directory)) for name, directory in TEMPLATE_DIRS.items()
+}
 
 
 def render(request: Request, name: str, **context: object) -> HTMLResponse:
+    """Render a template from the configured UI theme (Settings.web_theme)."""
+    theme = _settings(request).web_theme
     context.setdefault("request", request)
-    return templates.TemplateResponse(request=request, name=name, context=context)
+    return _templates[theme].TemplateResponse(request=request, name=name, context=context)
 
 
 def _settings(request: Request) -> Settings:

@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     auto_migrate: bool = True
+    # UI theme: "modern" (current custom UI) or "legacy" (Bootstrap 4.5 look
+    # matching the old DoES site). Selectable at deployment time, not in the UI.
+    web_theme: str = "modern"
 
     # --- Database ---
     database_url: str = "postgresql+psycopg://optimism:optimism@localhost:5432/optimism"
@@ -132,6 +135,13 @@ class Settings(BaseSettings):
     observability_alert_5xx_rate: float = 0.01
     observability_alert_email_backlog: int = 100
     observability_alert_db_pool_exhaustion: bool = True
+
+    @field_validator("web_theme")
+    @classmethod
+    def _web_theme_valid(cls, v: str) -> str:
+        if v not in ("modern", "legacy"):
+            raise ValueError("WEB_THEME must be 'modern' or 'legacy'")
+        return v
 
     @field_validator("booking_cancellation_cutoff_minutes")
     @classmethod

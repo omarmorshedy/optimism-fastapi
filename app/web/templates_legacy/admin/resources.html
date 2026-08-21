@@ -1,0 +1,55 @@
+{% extends "admin/admin-base.html" %}
+{% block adminContent %}
+<h1 class="h2">Resources</h1>
+
+<form method="post" action="/admin/resources/create" class="form-row mb-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group col-md-3">
+        <label for="name">Name</label>
+        <input type="text" class="form-control" name="name" id="name" required>
+    </div>
+    <div class="form-group col-md-3">
+        <label for="resourceTypeId">Type</label>
+        <select class="form-control" name="resourceTypeId" id="resourceTypeId">
+            <option value="">— none —</option>
+            {% for type_id, type_name in types.items() %}
+                <option value="{{ type_id }}">{{ type_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="capacity">Capacity</label>
+        <input type="number" class="form-control" name="capacity" id="capacity" min="1" value="1" required>
+    </div>
+    <div class="form-group col-md-2 align-self-end">
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>ID</th><th>Name</th><th>Type</th><th>Capacity</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.resourceTypeName or "—" }}</td>
+                <td>{{ item.capacity }}</td>
+                <td>
+                    <a href="/admin/resources/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="/admin/resources/{{ item.id }}/windows" class="btn btn-sm btn-outline-primary">Windows</a>
+                    <form method="post" action="/admin/resources/{{ item.id }}/delete" class="d-inline"
+                          onsubmit="return confirm('Delete resource {{ item.name }}?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="5">No resources yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

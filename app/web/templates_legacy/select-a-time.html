@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Choose a time - {{ resource.name }} - DoES Liverpool{% endblock %}
+{% block main %}
+<main role="main">
+    <div class="booking-step">
+        <div class="container">
+            <h1>Make a booking</h1>
+            <h2><small class="text-muted">Step 2 of 3</small><br>Choose a time for {{ resource.name }}</h2>
+        </div>
+    </div>
+    <div class="container">
+        <div class="calendar-toolbar d-flex align-items-center my-3">
+            <button type="button" id="prev-week" class="btn btn-secondary">Previous week</button>
+            <span id="week-label" class="mx-3">{{ initial_start }} to {{ initial_end }}</span>
+            <button type="button" id="next-week" class="btn btn-secondary">Next week</button>
+        </div>
+
+        <form method="post" action="/your-details">
+            <input type="hidden" name="resource" value="{{ resource.id }}">
+            <div id="calendar-days">
+                {% for day in initial_calendar.dates %}
+                    {% set day_resources = day.resources %}
+                    {% set slots = day_resources[0].slots if day_resources else [] %}
+                    <div class="calendar-day border-top py-3">
+                        <h3>{{ day.date[:10] }}</h3>
+                        {% if slots %}
+                            <div class="d-flex flex-wrap">
+                                {% for slot in slots %}
+                                    {% if slot.status == "available" %}
+                                        <button type="submit" name="slot" value="{{ slot.starts }}|{{ slot.ends }}"
+                                                class="btn btn-sm btn-primary slot-button mb-2 mr-2">
+                                            {{ slot.starts[11:16] }} – {{ slot.ends[11:16] }}
+                                        </button>
+                                    {% else %}
+                                        <span class="btn btn-sm btn-outline-secondary disabled mb-2 mr-2"
+                                              aria-disabled="true">{{ slot.starts[11:16] }} – {{ slot.ends[11:16] }} (unavailable)</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>No availability.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.OPTIMISM_CALENDAR = {
+    resourceId: {{ resource.id }},
+    initialStart: "{{ initial_start }}",
+    initialEnd: "{{ initial_end }}"
+  };
+</script>
+<script src="/static/js/calendar.js" defer></script>
+{% endblock %}

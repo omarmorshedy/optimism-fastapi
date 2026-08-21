@@ -325,3 +325,35 @@ no-overbooking concurrency test).
   Node/Express JS). The pages look different because the legacy Bootstrap
   4.5/FullCalendar styling was replaced by a custom accessible stylesheet and
   a progressively-enhanced calendar (an explicitly allowed option).
+
+## 2026-08-21 — Step 11: Legacy (Bootstrap) UI theme, switchable at deployment time
+
+Added a second UI theme that recreates the old DoES Bootstrap 4.5 look, toggled
+by `WEB_THEME=modern|legacy` (Settings.web_theme, validated; NOT in the UI).
+Default remains `modern` (the current custom UI).
+
+- Vendored the legacy assets from the pinned submodule into
+  `app/web/static/legacy/` (read-only reference → copied, never edited):
+  Bootstrap 4.5 compiled `optimism.css`, `bootstrap.bundle.min.js` (+ map),
+  and the DoES logo. No remote/CDN dependencies.
+- New `app/web/templates_legacy/` (16 templates) recreating the old pages:
+  navbar + footer, jumbotron home, "Step 1/2/3 of 3" booking flow, Bootstrap
+  form controls, confirmation alert + cancel modal, admin sidebar layout and
+  sign-in page. The calendar stays the same progressively-enhanced week view
+  (server-rendered + `calendar.js`), styled with Bootstrap buttons — the old
+  FullCalendar widget was not re-vendored (it was a 675 KB bundle plus CDN
+  axios/jQuery; documented choice). Modal open/close uses a tiny
+  dependency-free script instead of jQuery.
+- Router now holds two Jinja2 template directories and `render()` picks the
+  one from `Settings.web_theme`; same routes, same context variables, so both
+  themes behave identically (e.g. cancel still GET-confirms / POST-acts).
+- Deployment plumbing: `WEB_THEME` pass-through in `docker-compose.yml`,
+  `.env.example`, Makefile docs, README section.
+- Tests: `tests/web/test_themes.py` — legacy home (jumbotron + legacy css),
+  select-a-resource/time steps, admin login + pages, full booking flow through
+  the legacy templates, and that the default stays modern; invalid theme value
+  rejected. **Full suite now 226 passed**; ruff + mypy clean.
+- Verified in the running compose stack with `WEB_THEME=legacy`: home renders
+  the jumbotron + vendored Bootstrap assets, booking flow completes with the
+  confirmation modal; stack left running on the legacy theme for review
+  (switch back with `WEB_THEME=modern make up`).

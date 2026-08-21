@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block main %}
+<main role="main">
+    <div class="jumbotron">
+        <div class="container">
+            <h1 class="display-3">Booking resources at DoES Liverpool</h1>
+            <p>Book a room, laser cutter or hot desk at DoES Liverpool.</p>
+            <p><a class="btn btn-primary btn-lg" href="/select-a-resource" role="button">Start your booking &raquo;</a></p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h2>Resources</h2>
+                <p>Choose from the rooms, laser cutters and hot desks we have available to book.</p>
+                <p><a class="btn btn-secondary" href="/select-a-resource" role="button">View details &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <h2>Availability</h2>
+                <p>Pick a time from the availability windows for your chosen resource.</p>
+                <p><a class="btn btn-secondary" href="/select-a-resource" role="button">Book now &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <h2>Cancel or amend</h2>
+                <p>Use the link in your confirmation email to change or cancel a booking.</p>
+                <p><a class="btn btn-secondary" href="/select-a-resource" role="button">Start here &raquo;</a></p>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "admin/admin-base.html" %}
+{% block adminContent %}
+<h1 class="h2">Availability exceptions</h1>
+
+<form method="post" action="/admin/exceptions/create" class="form-row mb-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group col-md-3">
+        <label for="resourceId">Resource</label>
+        <select class="form-control" name="resourceId" id="resourceId" required>
+            {% for resource_id, resource_name in resources.items() %}
+                <option value="{{ resource_id }}">{{ resource_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="startDate">Start date</label>
+        <input type="date" class="form-control" name="startDate" id="startDate" required>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="endDate">End date</label>
+        <input type="date" class="form-control" name="endDate" id="endDate" required>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="kind">Kind</label>
+        <select class="form-control" name="kind" id="kind" required>
+            <option value="closed">Closed</option>
+            <option value="open">Open</option>
+        </select>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="reason">Reason</label>
+        <input type="text" class="form-control" name="reason" id="reason">
+    </div>
+    <div class="form-group col-md-1 align-self-end">
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>ID</th><th>Resource</th><th>Start</th><th>End</th><th>Kind</th><th>Reason</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ resources.get(item.resourceId, item.resourceId) }}</td>
+                <td>{{ item.startDate }}</td>
+                <td>{{ item.endDate }}</td>
+                <td>{{ item.kind }}</td>
+                <td>{{ item.reason or "—" }}</td>
+                <td>
+                    <form method="post" action="/admin/exceptions/{{ item.id }}/delete" class="d-inline"
+                          onsubmit="return confirm('Delete this exception?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7">No exceptions yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

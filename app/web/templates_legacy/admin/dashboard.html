@@ -1,0 +1,12 @@
+{% extends "admin/admin-base.html" %}
+{% block adminContent %}
+<h1 class="h2">Dashboard</h1>
+<p>Manage resources, availability windows, exceptions and bookings.</p>
+<div class="list-group">
+    <a href="/admin/resources" class="list-group-item list-group-item-action">Resources</a>
+    <a href="/admin/resource-types" class="list-group-item list-group-item-action">Resource types</a>
+    <a href="/admin/windows" class="list-group-item list-group-item-action">Availability windows</a>
+    <a href="/admin/exceptions" class="list-group-item list-group-item-action">Availability exceptions</a>
+    <a href="/admin/bookings" class="list-group-item list-group-item-action">Bookings</a>
+</div>
+{% endblock %}

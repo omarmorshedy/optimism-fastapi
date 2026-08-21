@@ -1,0 +1,53 @@
+{% extends "admin/admin-base.html" %}
+{% block adminContent %}
+<h1 class="h2">Bookings</h1>
+
+<form method="get" action="/admin/bookings" class="form-row mb-3">
+    <div class="form-group col-md-2">
+        <label for="resourceId">Resource</label>
+        <select class="form-control" name="resourceId" id="resourceId">
+            <option value="">All</option>
+            {% for resource_id, resource_name in resources.items() %}
+                <option value="{{ resource_id }}">{{ resource_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="cancelled">Status</label>
+        <select class="form-control" name="cancelled" id="cancelled">
+            <option value="">All</option>
+            <option value="false">Active</option>
+            <option value="true">Cancelled</option>
+        </select>
+    </div>
+    <div class="form-group col-md-3">
+        <label for="email">Email contains</label>
+        <input type="text" class="form-control" name="email" id="email">
+    </div>
+    <div class="form-group col-md-1 align-self-end">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>ID</th><th>Resource</th><th>Name</th><th>Email</th><th>Starts</th><th>Ends</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.resourceName }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.email }}</td>
+                <td>{{ item.starts }}</td>
+                <td>{{ item.ends }}</td>
+                <td>{% if item.cancelled %}Cancelled{% else %}Active{% endif %}</td>
+                <td><a href="/admin/bookings/{{ item.id }}">View</a></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="8">No bookings found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

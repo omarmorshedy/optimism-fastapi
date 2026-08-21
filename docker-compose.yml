@@ -33,6 +33,7 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_TLS: ${SMTP_TLS:-false}
       EMAIL_WORKER_ENABLED: ${EMAIL_WORKER_ENABLED:-true}
+      WEB_THEME: ${WEB_THEME:-modern}
       AUTO_MIGRATE: "true"
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:

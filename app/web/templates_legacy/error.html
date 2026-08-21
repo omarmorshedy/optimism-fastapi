@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block main %}
+<main role="main">
+    <div class="booking-step">
+        <div class="container">
+            <h1>Error</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="mock-block">
+            <h2>Something went wrong</h2>
+            <p>{{ safeErrorMessage }}</p>
+            <p><a href="/">Return to the home page</a></p>
+        </div>
+    </div>
+</main>
+{% endblock %}

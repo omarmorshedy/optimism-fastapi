@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Booking - DoES Liverpool{% endblock %}</title>
+    <link rel="stylesheet" href="/static/legacy/css/optimism.css">
+    <link rel="stylesheet" href="/static/legacy/css/optimism-legacy.css">
+    {% block header %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="/">
+            <img src="/static/legacy/images/does-logo.png" alt="DoES Liverpool logo" class="mr-1">
+            Booking system
+        </a>
+        {% block navbar %}
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/select-a-resource">Make a booking</a></li>
+            </ul>
+            <a href="/select-a-resource" class="btn btn-success my-2 my-sm-0">Make a booking</a>
+        </div>
+        {% endblock %}
+    </nav>
+
+    {% block main %}{% endblock %}
+
+    <footer class="footer mt-4">
+        <div class="container">
+            <div class="col">
+                &copy; DoES Liverpool 2020-2026
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/legacy/scripts/bootstrap.bundle.min.js"></script>
+    <script>
+      // Minimal dependency-free helpers for the legacy theme (Bootstrap modals
+      // need data-toggle/data-dismiss; keep the page usable without jQuery).
+      document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('[data-toggle="modal"]').forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var target = document.querySelector(btn.getAttribute("data-target"));
+            if (target) { target.classList.add("show"); target.style.display = "block"; }
+          });
+        });
+        document.querySelectorAll('[data-dismiss="modal"]').forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var modal = btn.closest(".modal");
+            if (modal) { modal.classList.remove("show"); modal.style.display = "none"; }
+          });
+        });
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

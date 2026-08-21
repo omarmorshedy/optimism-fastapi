@@ -38,7 +38,11 @@ The authoritative planning/reference docs live in `docs/planning/`:
 - **Web UI**: server-rendered public booking flow (home → resource → time →
   details → confirmation → cancel) with a progressively-enhanced week
   calendar, plus a full admin UI (login, dashboard, resources, resource types,
-  windows, exceptions, bookings).
+  windows, exceptions, bookings). Two UI themes are available, chosen at
+  deployment time via `WEB_THEME` (not in the UI):
+  - `WEB_THEME=modern` (default) — the current custom accessible stylesheet;
+  - `WEB_THEME=legacy` — the Bootstrap 4.5 look of the old DoES site
+    (vendored assets, same routes and data).
 - **Observability**: structured JSON logs with request IDs, `/healthz`,
   `/readyz`, Prometheus `/metrics` (ARC 42 §8.2).
 
@@ -79,6 +83,12 @@ admin login uses the password configured via `ADMIN_PASSWORD_HASH`
 make secret                   # once: writes ./secrets/*.txt
 make up                       # docker compose up -d --build (migrations auto-run)
 docker compose exec web uv run python scripts/seed_dev.py   # optional seed data
+```
+
+To use the old Bootstrap look instead of the default UI:
+
+```bash
+WEB_THEME=legacy make up      # or: WEB_THEME=legacy docker compose up -d
 ```
 
 ### Tests & quality gates

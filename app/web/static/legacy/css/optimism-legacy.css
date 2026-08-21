@@ -1,0 +1,21 @@
+/* Optimism legacy theme — small additions on top of the vendored Bootstrap
+ * build (which already includes .booking-step, .mock-block, .sidebar).
+ * Styles the custom server-rendered week calendar used by this theme.
+ */
+
+body {
+  padding-top: 3.5rem;
+}
+
+.calendar-day h3 {
+  font-size: 1.1rem;
+}
+
+.slot-button {
+  min-width: 7rem;
+}
+
+.footer {
+  color: #6c757d;
+  font-size: 0.9rem;
+}

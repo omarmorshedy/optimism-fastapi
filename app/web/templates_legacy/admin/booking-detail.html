@@ -1,0 +1,27 @@
+{% extends "admin/admin-base.html" %}
+{% block adminContent %}
+<h1 class="h2">Booking #{{ booking.id }}</h1>
+<dl class="row">
+    <dt class="col-sm-3">Resource</dt><dd class="col-sm-9">{{ booking.resourceName }}</dd>
+    <dt class="col-sm-3">Name</dt><dd class="col-sm-9">{{ booking.name }}</dd>
+    <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ booking.email }}</dd>
+    <dt class="col-sm-3">Start</dt><dd class="col-sm-9">{{ friendlyStartTime }}</dd>
+    <dt class="col-sm-3">End</dt><dd class="col-sm-9">{{ friendlyEndTime }}</dd>
+    <dt class="col-sm-3">Notes</dt><dd class="col-sm-9">{{ booking.notes or "—" }}</dd>
+    <dt class="col-sm-3">Status</dt><dd class="col-sm-9">{% if booking.cancelled %}Cancelled{% else %}Active{% endif %}</dd>
+    <dt class="col-sm-3">Created</dt><dd class="col-sm-9">{{ booking.createdAt }}</dd>
+</dl>
+{% if not booking.cancelled %}
+    <form method="post" action="/admin/bookings/{{ booking.id }}/cancel" class="d-inline"
+          onsubmit="return confirm('Cancel this booking?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="btn btn-warning">Cancel booking</button>
+    </form>
+{% endif %}
+<form method="post" action="/admin/bookings/{{ booking.id }}/delete" class="d-inline"
+      onsubmit="return confirm('Delete this booking?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="btn btn-danger">Delete booking</button>
+</form>
+<a href="/admin/bookings" class="btn btn-secondary">Back to bookings</a>
+{% endblock %}

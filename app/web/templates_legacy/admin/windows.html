@@ -1,0 +1,63 @@
+{% extends "admin/admin-base.html" %}
+{% block adminContent %}
+<h1 class="h2">Availability windows</h1>
+
+<form method="post" action="/admin/windows/create" class="form-row mb-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group col-md-3">
+        <label for="resourceId">Resource</label>
+        <select class="form-control" name="resourceId" id="resourceId" required>
+            {% for resource_id, resource_name in resources.items() %}
+                <option value="{{ resource_id }}">{{ resource_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="weekday">Weekday (0=Sun)</label>
+        <input type="number" class="form-control" name="weekday" id="weekday" min="0" max="6" value="1" required>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="starts">Starts (UTC)</label>
+        <input type="time" class="form-control" name="starts" id="starts" value="09:30" required>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="ends">Ends (UTC)</label>
+        <input type="time" class="form-control" name="ends" id="ends" value="17:30" required>
+    </div>
+    <div class="form-group col-md-2">
+        <label for="name">Name</label>
+        <input type="text" class="form-control" name="name" id="name">
+    </div>
+    <div class="form-group col-md-1 align-self-end">
+        <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr><th>ID</th><th>Resource</th><th>Weekday</th><th>Starts</th><th>Ends</th><th>Name</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ resources.get(item.resourceId, item.resourceId) }}</td>
+                <td>{{ item.weekday }}</td>
+                <td>{{ item.starts }}</td>
+                <td>{{ item.ends }}</td>
+                <td>{{ item.name or "—" }}</td>
+                <td>
+                    <a href="/admin/windows/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <form method="post" action="/admin/windows/{{ item.id }}/delete" class="d-inline"
+                          onsubmit="return confirm('Delete this window?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7">No windows yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
