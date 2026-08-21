@@ -296,3 +296,11 @@ postgres:16-alpine + web). Fixed along the way:
 **Final gate:** ruff format/lint clean, mypy clean (81 files), full suite
 **218 passed** (unit + API + web + PostgreSQL integration incl. the 10-thread
 no-overbooking concurrency test).
+
+## 2026-08-20 — Step 9: Developer-experience polish
+
+- Marked the full task list complete; added `pre-commit` to the dev dependency
+  group so `uv run pre-commit install` works out of the box.
+- `.env.example` now ships the DEV-ONLY bcrypt hash of `change-me` (matching
+  the code default), so copying it verbatim yields a working admin login
+  (password `change-me`); `make hash` documented for real passwords.

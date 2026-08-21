@@ -33,6 +33,7 @@ dev = [
     "mypy>=1.10",
     "types-itsdangerous>=1.1",
     "pip-audit>=2.7",
+    "pre-commit>=3.7",
 ]
 
 [tool.uv]

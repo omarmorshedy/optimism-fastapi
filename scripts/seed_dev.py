@@ -10,6 +10,9 @@ from __future__ import annotations
 
 import datetime as dt
 
+from app.core.config import get_settings
+from app.db.engine import session_scope
+
 # Import every model so all relationships are registered (like alembic env.py).
 from app.models import (  # noqa: F401
     admin_session,
@@ -21,8 +24,6 @@ from app.models import (  # noqa: F401
     resource,
     resource_type,
 )
-from app.core.config import get_settings
-from app.db.engine import session_scope
 from app.models.availability_window import AvailabilityWindow
 from app.models.resource import Resource
 from app.models.resource_type import ResourceType
@@ -72,18 +73,13 @@ def main() -> None:
         session.query(Resource).delete()
         session.query(ResourceType).delete()
 
-        types = {
-            name: ResourceType(name=name)
-            for name in ("room", "laser-cutter", "hot-desk")
-        }
+        types = {name: ResourceType(name=name) for name in ("room", "laser-cutter", "hot-desk")}
         session.add_all(types.values())
         session.flush()
 
         resources: list[Resource] = []
         for name, capacity, type_name in RESOURCES:
-            resource = Resource(
-                name=name, capacity=capacity, resource_type_id=types[type_name].id
-            )
+            resource = Resource(name=name, capacity=capacity, resource_type_id=types[type_name].id)
             session.add(resource)
             resources.append(resource)
         session.flush()
@@ -96,8 +92,8 @@ def main() -> None:
                     AvailabilityWindow(
                         resource_id=resource.id,
                         weekday=weekday,
-                        starts=dt.time(start_h, start_m, tzinfo=dt.timezone.utc),
-                        ends=dt.time(end_h, end_m, tzinfo=dt.timezone.utc),
+                        starts=dt.time(start_h, start_m, tzinfo=dt.UTC),
+                        ends=dt.time(end_h, end_m, tzinfo=dt.UTC),
                         name=resource.name,
                     )
                 )
