@@ -357,3 +357,36 @@ Default remains `modern` (the current custom UI).
   the jumbotron + vendored Bootstrap assets, booking flow completes with the
   confirmation modal; stack left running on the legacy theme for review
   (switch back with `WEB_THEME=modern make up`).
+
+## 2026-08-21 — Step 12: Calendar-week alignment + unified calendar DOM
+
+Two fixes from user review:
+
+1. **Calendar weeks**: the initial week was "today .. today+6"; it is now the
+   current CALENDAR week (Sunday..Saturday, matching the legacy FullCalendar
+   convention and the Sunday=0 weekday rule): `week_start = today -
+   weekday_of(today)`, `week_end = week_start + 6d`. Prev/next navigation
+   already moved in ±7-day steps, so it stays week-aligned.
+
+2. **Legacy UI changing on week navigation**: the JS calendar renderer always
+   produced the MODERN theme's markup, so the legacy theme visibly switched
+   styles after clicking prev/next. Fixed by unifying the calendar DOM across
+   both server templates and the JS renderer:
+   `.calendar-day > h3 + .slot-list` with `.slot-button` /
+   `.slot-unavailable` (no theme-specific or Bootstrap-only classes in the
+   slot markup). Each theme's CSS styles those classes — the modern theme
+   keeps its look, the legacy theme's `optimism-legacy.css` now replicates the
+   Bootstrap primary-button look for `.slot-button`. Navigation therefore never
+   changes the look in either theme.
+
+Also: the current week naturally contains past days, so slots whose end time
+has passed are now greyed out (like the old site's `fc-event-past`); the server
+passes `now_iso` to the templates and embeds `now` in the calendar JS config,
+and both compare the fixed-format UTC strings (lexicographic == chronological).
+
+Tests: `frozen_week` fixture (freezes "now" to Monday 2026-08-24 09:00 UTC so
+the current week and the bookable Monday window are deterministic); new tests
+for calendar-week alignment, past-slot disabling, and the legacy theme using
+the unified markup. Full suite **223 passed + 5 integration (PG)**; ruff +
+mypy clean. Verified live in compose: both themes show "2026-08-16 to
+2026-08-22" with identical slot markup; stack left on the legacy theme.

@@ -90,6 +90,23 @@ def app(settings):
 
 
 @pytest.fixture()
+def frozen_week(monkeypatch):
+    """Freeze "now" to Monday 2026-08-24 09:00 UTC.
+
+    Makes the "current calendar week" deterministic (Sun 2026-08-23 ..
+    Sat 2026-08-29) and keeps the standard Monday 09:30-10:30 test window
+    bookable regardless of when the tests run.
+    """
+    import datetime as dt2
+
+    from app.core import time as time_module
+
+    fixed = dt2.datetime(2026, 8, 24, 9, 0, tzinfo=dt2.UTC)
+    monkeypatch.setattr(time_module, "utcnow", lambda: fixed)
+    return fixed
+
+
+@pytest.fixture()
 def client(app):
     with TestClient(app) as c:
         yield c

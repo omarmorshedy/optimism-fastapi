@@ -156,21 +156,28 @@ def select_a_time(
         resource_obj = ResourceService(session).get(resource).model_dump(by_alias=True)
     except Problem as exc:
         return _error(request, exc.detail, status=exc.status)
-    # Initial week (today .. +6 days) is rendered server-side so the page works
-    # without JavaScript; the calendar JS fetches further weeks via /calendar-data.
+    # The initial week is the current CALENDAR week (Sunday..Saturday, matching
+    # the legacy FullCalendar convention and the Sunday=0 weekday rule), not
+    # "today .. today+6". It is rendered server-side so the page works without
+    # JavaScript; the calendar JS fetches further weeks via /calendar-data.
+    from app.core.time import serialize_datetime, weekday_of
     from app.core.time import utcnow as _utcnow
 
     today = _utcnow().date()
-    initial_calendar = CalendarService(session).get(today, today + dt.timedelta(days=6), resource)
+    week_start = today - dt.timedelta(days=weekday_of(today))  # Sunday of this week
+    week_end = week_start + dt.timedelta(days=6)
+    initial_calendar = CalendarService(session).get(week_start, week_end, resource)
     intent = UserIntent(resource_id=resource)
     response = render(
         request,
         "select-a-time.html",
         resource=resource_obj,
         resource_id=resource,
-        initial_start=today.isoformat(),
-        initial_end=(today + dt.timedelta(days=6)).isoformat(),
+        initial_start=week_start.isoformat(),
+        initial_end=week_end.isoformat(),
         initial_calendar=initial_calendar,
+        # Server UTC time so templates/JS can grey out slots that have ended.
+        now_iso=serialize_datetime(_utcnow()),
         csrf_token=_csrf(request),
     )
     response.set_cookie(

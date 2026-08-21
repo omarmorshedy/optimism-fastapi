@@ -1,6 +1,9 @@
 /* Optimism calendar — progressively enhanced week view.
  * Fetches availability JSON from the same-process /calendar-data endpoint
  * (public) and re-renders the slot list when the user navigates weeks.
+ * The markup produced here is IDENTICAL to the server-rendered initial week
+ * (both themes use the same DOM: .calendar-day > h3 + .slot-list with
+ * .slot-button / .slot-unavailable), so navigation never changes the look.
  * Without JavaScript the server-rendered initial week is fully usable.
  */
 (function () {
@@ -31,16 +34,16 @@
     return date.toISOString().slice(0, 10);
   }
 
-  function escapeHtml(value) {
-    var div = document.createElement("div");
-    div.textContent = value;
-    return div.innerHTML;
+  // Slots whose end time has passed are not bookable (same fixed-format UTC
+  // strings on both sides, so string comparison equals chronological order).
+  function isPast(slot) {
+    return config.now && slot.ends <= config.now;
   }
 
   function renderDays(calendar) {
     container.innerHTML = "";
     (calendar.dates || []).forEach(function (day) {
-      var section = document.createElement("section");
+      var section = document.createElement("div");
       section.className = "calendar-day";
       section.setAttribute("aria-label", day.date.slice(0, 10));
 
@@ -54,26 +57,24 @@
         none.textContent = "No availability.";
         section.appendChild(none);
       } else {
-        var list = document.createElement("ul");
+        var list = document.createElement("div");
         list.className = "slot-list";
         slots.forEach(function (slot) {
-          var item = document.createElement("li");
-          if (slot.status === "available") {
+          if (slot.status === "available" && !isPast(slot)) {
             var button = document.createElement("button");
             button.type = "submit";
             button.name = "slot";
             button.value = slot.starts + "|" + slot.ends;
-            button.className = "button slot-button";
+            button.className = "slot-button";
             button.textContent = slot.starts.slice(11, 16) + " \u2013 " + slot.ends.slice(11, 16);
-            item.appendChild(button);
+            list.appendChild(button);
           } else {
             var span = document.createElement("span");
             span.className = "slot-unavailable";
             span.setAttribute("aria-disabled", "true");
             span.textContent = slot.starts.slice(11, 16) + " \u2013 " + slot.ends.slice(11, 16) + " (unavailable)";
-            item.appendChild(span);
+            list.appendChild(span);
           }
-          list.appendChild(item);
         });
         section.appendChild(list);
       }

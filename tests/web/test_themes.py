@@ -65,11 +65,15 @@ class TestLegacyTheme:
         assert "Dinky" in response.text
         assert 'class="btn btn-primary"' in response.text
 
-    def test_select_a_time(self, legacy_client) -> None:
+    def test_select_a_time(self, legacy_client, frozen_week) -> None:
         response = legacy_client.get("/select-a-time?resource=1")
         assert response.status_code == 200
         assert "Step 2 of 3" in response.text
-        assert "slot-button" in response.text  # server-rendered week
+        # Server-rendered week uses the SAME unified markup the JS produces,
+        # so navigating weeks never changes the look.
+        assert 'class="slot-list"' in response.text
+        assert 'class="slot-button"' in response.text
+        assert "btn btn-sm btn-primary slot-button" not in response.text
         assert legacy_client.cookies.get("user_intent")
 
     def test_admin_login_page(self, legacy_client) -> None:
@@ -86,7 +90,7 @@ class TestLegacyTheme:
         resources_page = legacy_client.get("/admin/resources")
         assert "Resources" in resources_page.text
 
-    def test_full_booking_flow(self, legacy_client) -> None:
+    def test_full_booking_flow(self, legacy_client, frozen_week) -> None:
         legacy_client.get("/select-a-time?resource=1")
         details = legacy_client.post(
             "/your-details",

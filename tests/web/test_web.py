@@ -45,11 +45,48 @@ class TestPublicFlow:
         assert "Dinky" in response.text
         assert client.cookies.get("user_intent")
 
-    def test_select_a_time_renders_initial_week(self, seeded, client) -> None:
+    def test_select_a_time_renders_initial_week(self, seeded, client, frozen_week) -> None:
         response = client.get("/select-a-time?resource=1")
         assert response.status_code == 200
         # The initial week is rendered server-side (no-JS fallback).
         assert "slot-button" in response.text
+
+    def test_initial_week_is_the_calendar_week(self, seeded, client, frozen_week) -> None:
+        """The week shown is the current CALENDAR week (Sunday..Saturday), not
+        today .. today+6."""
+        import re
+
+        from app.core.time import utcnow, weekday_of
+
+        response = client.get("/select-a-time?resource=1")
+        match = re.search(r'initialStart: "(\d{4}-\d{2}-\d{2})"', response.text)
+        assert match, "initialStart missing from calendar config"
+        today = utcnow().date()
+        expected_sunday = today - dt.timedelta(days=weekday_of(today))
+        assert match.group(1) == expected_sunday.isoformat()
+
+    def test_past_slots_are_disabled(self, seeded, client, db_session, frozen_week) -> None:
+        """A slot whose end time has passed renders as unavailable (like the
+        old site), even though it is structurally available."""
+        from app.core.time import utcnow, weekday_of
+
+        from tests.factories import create_resource, create_window
+
+        create_resource(db_session, name="PastCheck", capacity=1)
+        today = utcnow().date()
+        create_window(
+            db_session,
+            2,
+            weekday=weekday_of(today),  # appears in the current calendar week
+            starts=dt.time(0, 1, tzinfo=dt.UTC),
+            ends=dt.time(0, 30, tzinfo=dt.UTC),  # always in the past
+        )
+        db_session.commit()
+        response = client.get("/select-a-time?resource=2")
+        assert response.status_code == 200
+        # The past slot renders as a disabled span; no bookable button exists.
+        assert "slot-unavailable" in response.text
+        assert 'name="slot"' not in response.text
 
     def test_select_a_time_missing_resource(self, client) -> None:
         response = client.get("/select-a-time")

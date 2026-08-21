@@ -16,26 +16,24 @@
     {% for day in initial_calendar.dates %}
       {% set day_resources = day.resources %}
       {% set slots = day_resources[0].slots if day_resources else [] %}
-      <section class="calendar-day" aria-label="{{ day.date[:10] }}">
+      <div class="calendar-day" aria-label="{{ day.date[:10] }}">
         <h3>{{ day.date[:10] }}</h3>
         {% if slots %}
-          <ul class="slot-list">
+          <div class="slot-list">
             {% for slot in slots %}
-              <li>
-                {% if slot.status == "available" %}
-                  <button type="submit" name="slot" value="{{ slot.starts }}|{{ slot.ends }}" class="button slot-button">
-                    {{ slot.starts[11:16] }} – {{ slot.ends[11:16] }}
-                  </button>
-                {% else %}
-                  <span class="slot-unavailable" aria-disabled="true">{{ slot.starts[11:16] }} – {{ slot.ends[11:16] }} (unavailable)</span>
-                {% endif %}
-              </li>
+              {% if slot.status == "available" and slot.ends > now_iso %}
+                <button type="submit" name="slot" value="{{ slot.starts }}|{{ slot.ends }}" class="slot-button">
+                  {{ slot.starts[11:16] }} – {{ slot.ends[11:16] }}
+                </button>
+              {% else %}
+                <span class="slot-unavailable" aria-disabled="true">{{ slot.starts[11:16] }} – {{ slot.ends[11:16] }} (unavailable)</span>
+              {% endif %}
             {% endfor %}
-          </ul>
+          </div>
         {% else %}
           <p>No availability.</p>
         {% endif %}
-      </section>
+      </div>
     {% endfor %}
   </div>
 </form>
@@ -45,7 +43,8 @@
   window.OPTIMISM_CALENDAR = {
     resourceId: {{ resource.id }},
     initialStart: "{{ initial_start }}",
-    initialEnd: "{{ initial_end }}"
+    initialEnd: "{{ initial_end }}",
+    now: "{{ now_iso }}"
   };
 </script>
 <script src="/static/js/calendar.js" defer></script>

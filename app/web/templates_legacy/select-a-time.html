@@ -21,19 +21,18 @@
                 {% for day in initial_calendar.dates %}
                     {% set day_resources = day.resources %}
                     {% set slots = day_resources[0].slots if day_resources else [] %}
-                    <div class="calendar-day border-top py-3">
+                    <div class="calendar-day" aria-label="{{ day.date[:10] }}">
                         <h3>{{ day.date[:10] }}</h3>
                         {% if slots %}
-                            <div class="d-flex flex-wrap">
+                            <div class="slot-list">
                                 {% for slot in slots %}
-                                    {% if slot.status == "available" %}
+                                    {% if slot.status == "available" and slot.ends > now_iso %}
                                         <button type="submit" name="slot" value="{{ slot.starts }}|{{ slot.ends }}"
-                                                class="btn btn-sm btn-primary slot-button mb-2 mr-2">
+                                                class="slot-button">
                                             {{ slot.starts[11:16] }} – {{ slot.ends[11:16] }}
                                         </button>
                                     {% else %}
-                                        <span class="btn btn-sm btn-outline-secondary disabled mb-2 mr-2"
-                                              aria-disabled="true">{{ slot.starts[11:16] }} – {{ slot.ends[11:16] }} (unavailable)</span>
+                                        <span class="slot-unavailable" aria-disabled="true">{{ slot.starts[11:16] }} – {{ slot.ends[11:16] }} (unavailable)</span>
                                     {% endif %}
                                 {% endfor %}
                             </div>
@@ -52,7 +51,8 @@
   window.OPTIMISM_CALENDAR = {
     resourceId: {{ resource.id }},
     initialStart: "{{ initial_start }}",
-    initialEnd: "{{ initial_end }}"
+    initialEnd: "{{ initial_end }}",
+    now: "{{ now_iso }}"
   };
 </script>
 <script src="/static/js/calendar.js" defer></script>
