@@ -31,7 +31,7 @@ from app.domains.admin.auth import (
     AdminAuthService,
 )
 from app.domains.bookings.schemas import BookingCreate
-from app.domains.bookings.service import BookingService
+from app.domains.bookings.service import BookingService, resolve_public_base_url
 from app.domains.calendar.service import CalendarService
 from app.domains.resources.schemas import (
     ResourceCreate,
@@ -284,6 +284,11 @@ def confirmation(
 ) -> HTMLResponse:
     settings = _settings(request)
     service = BookingService(session, settings)
+    # If the operator has not configured a public website URL, derive the email
+    # link from the request the user is actually on. An explicit non-default
+    # OPTIMISM_WEBSITE_BASE_URL still wins for emailed links.
+    request_base = str(request.base_url).rstrip("/")
+    email_base_url = resolve_public_base_url(settings.optimism_website_base_url, request_base)
     try:
         created = service.create(
             BookingCreate(
@@ -293,18 +298,24 @@ def confirmation(
                 starts=starts,
                 ends=ends,
                 notes=notes,
-            )
+            ),
+            base_url=email_base_url,
         )
     except (Problem, ValidationError) as exc:
         return _form_failure(request, exc)
     booking = created.model_dump(by_alias=True)
-    cancellation_url = f"{settings.optimism_website_base_url}/cancel-booking/{booking['token']}"
+    # Use a same-origin relative link for the clickable href so the page works
+    # regardless of proxy/host config. Keep an absolute URL for display/copying,
+    # derived from the actual request rather than a possibly-misconfigured base.
+    cancellation_path = f"/cancel-booking/{booking['token']}"
+    cancellation_url = request_base + cancellation_path
     return render(
         request,
         "confirmation.html",
         **_friendly(booking, booking["resourceName"]),
         raw_token=booking["token"],
         cancellation_url=cancellation_url,
+        cancellation_path=cancellation_path,
     )
 
 

@@ -26,7 +26,7 @@ from app.domains.bookings.schemas import (
     BookingListFilter,
     BookingWithResourceName,
 )
-from app.domains.bookings.service import BookingService
+from app.domains.bookings.service import BookingService, resolve_public_base_url
 
 bookings_router = APIRouter(prefix="/bookings", tags=["bookings"], route_class=CommitOnSuccessRoute)
 
@@ -62,8 +62,12 @@ def list_bookings(
     dependencies=[Depends(limit_booking_create)],
 )
 def create_booking(payload: BookingCreate, request: Request, session: SessionDep) -> BookingCreated:
+    settings: Settings = request.app.state.settings
+    email_base_url = resolve_public_base_url(
+        settings.optimism_website_base_url, str(request.base_url).rstrip("/")
+    )
     try:
-        booking = _service(session, request).create(payload)
+        booking = _service(session, request).create(payload, base_url=email_base_url)
     except Exception:
         BOOKING_CREATED.labels(resource_id=str(payload.resource_id), status="error").inc()
         raise

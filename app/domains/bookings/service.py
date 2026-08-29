@@ -9,6 +9,7 @@ cutoff enforcement, admin operations, soft delete, and email outbox enqueue.
 from __future__ import annotations
 
 import datetime as dt
+from urllib.parse import urlparse
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -54,6 +55,21 @@ DETAIL_CUTOFF_PASSED = "This booking can no longer be changed or cancelled becau
 DETAIL_CANCELLED_AMEND = "This booking has been cancelled and cannot be amended."
 DETAIL_AMEND_MESSAGE = "Booking amended successfully."
 DETAIL_SOFT_DELETED = "Booking deleted."
+
+
+def resolve_public_base_url(configured_base: str, request_base: str) -> str:
+    """Choose the base URL for emailed cancellation links.
+
+    If the configured website URL is still the local development default, use
+    the origin the booking request actually came from so links work when the
+    app is reached through a different host/port/proxy. An explicit non-local
+    OPTIMISM_WEBSITE_BASE_URL is preserved.
+    """
+    configured = configured_base.rstrip("/")
+    host = urlparse(configured).hostname
+    if host in ("localhost", "127.0.0.1"):
+        return request_base
+    return configured
 
 
 class BookingService:
@@ -158,7 +174,7 @@ class BookingService:
 
     # --- public: create ------------------------------------------------------
 
-    def create(self, data: BookingCreate) -> BookingCreated:
+    def create(self, data: BookingCreate, *, base_url: str | None = None) -> BookingCreated:
         starts = parse_datetime(data.starts)
         ends = parse_datetime(data.ends)
         resource = self.repo.get_resource(data.resource_id)
@@ -189,8 +205,9 @@ class BookingService:
         # Persist the composed confirmation email in the outbox inside the
         # booking transaction (ADR-010, API_SPEC §8.2).
         website_base_url = (
-            self.settings.optimism_website_base_url if self.settings else "http://localhost:8000"
-        )
+            base_url
+            or (self.settings.optimism_website_base_url if self.settings else "http://localhost:8000")
+        ).rstrip("/")
         cancellation_url = f"{website_base_url}/cancel-booking/{raw_token}"
         subject, body = compose_confirmation_email(
             name=booking.name,

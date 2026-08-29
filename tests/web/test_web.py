@@ -139,6 +139,31 @@ class TestPublicFlow:
         assert "Web User" in response.text
         assert "/cancel-booking/" in response.text
 
+    def test_confirmation_cancellation_link_is_same_origin(self, seeded, client) -> None:
+        """The on-page cancellation link must be usable from whatever host the
+        user is actually on, not hard-coded to OPTIMISM_WEBSITE_BASE_URL."""
+        import re
+
+        client.get("/select-a-time?resource=1")
+        confirmation = client.post(
+            "/confirmation",
+            data={
+                "resourceId": "1",
+                "name": "Link Check",
+                "email": "link@example.org",
+                "starts": f"{MONDAY.isoformat()}T09:30:00",
+                "ends": f"{MONDAY.isoformat()}T10:30:00",
+                "notes": "",
+            },
+        )
+        assert confirmation.status_code == 200
+        match = re.search(r'href="(/cancel-booking/[A-Za-z0-9_-]+)"', confirmation.text)
+        assert match, "confirmation page should contain a same-origin cancellation link"
+        token = match.group(1).rsplit("/", 1)[-1]
+        page = client.get(f"/cancel-booking/{token}")
+        assert page.status_code == 200
+        assert "Are you sure" in page.text
+
     def test_cancel_page_requires_confirmation(self, seeded, client) -> None:
         # Create a booking via the web flow to obtain the raw token.
         client.get("/select-a-time?resource=1")
