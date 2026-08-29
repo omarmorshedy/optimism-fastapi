@@ -206,7 +206,11 @@ class BookingService:
         # booking transaction (ADR-010, API_SPEC §8.2).
         website_base_url = (
             base_url
-            or (self.settings.optimism_website_base_url if self.settings else "http://localhost:8000")
+            or (
+                self.settings.optimism_website_base_url
+                if self.settings
+                else "http://localhost:8000"
+            )
         ).rstrip("/")
         cancellation_url = f"{website_base_url}/cancel-booking/{raw_token}"
         subject, body = compose_confirmation_email(
