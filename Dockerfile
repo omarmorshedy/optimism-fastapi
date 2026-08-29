@@ -17,6 +17,10 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 # Non-root user (plan §2 / arc42 §7.2).
 RUN addgroup --system app && adduser --system --ingroup app app
+# Apply available security updates (e.g. OpenSSL) from the base image.
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/.venv /app/.venv
 COPY --chown=app:app . /app
 USER app
